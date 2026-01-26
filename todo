@@ -1,0 +1,13 @@
+
+!!!! being done rn :
+- [ ] make all endpoints have the same structure:
+    - [ ]  ws : stays the same
+    - [ ]  access (post/put/delete/get not getall) to particular resource (note/task...): should include id in the param ("notes/:id") 
+    - [ ] getall : doesnt change
+
+-[x] check and remove graphql
+-[x] make it so a note isnt created by default byt created by admin
+-[x] same for chat
+-[?] check if flutter/react can give the token in the right place
+-[ ] make sure that ws auth can take the token wherever it is
+-[ ] check notes (i dont think there is a function to get the entire note including the lines)

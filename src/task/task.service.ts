@@ -12,6 +12,8 @@ import { User } from '../user/entities/user.entity';
 import { SharedService } from '../services/shared.services';
 import { CreateEventService } from '../history/create-event.service';
 import { TaskSelectOptions } from './dto/task-select.dto';
+import { PaginationDto } from 'src/services/pagination.dto';
+import { Int } from '@nestjs/graphql';
 
 @Injectable()
 export class TaskService {
@@ -126,9 +128,9 @@ export class TaskService {
       throw new NotFoundException('Failed to fetch updated task');
     }
 
-    if (updateTaskDto.completed && !task.completed) {
-      this.eventEmitter.emit('task.completed', completeTask);
-    }
+    // if (updateTaskDto.completed && !task.completed) {
+    //   this.eventEmitter.emit('task.completed', completeTask);
+    // }
 
     if (updateTaskDto.dueDate && isTomorrow(completeTask.dueDate)) {
       this.eventEmitter.emit('task.dueTomorrow', completeTask);
@@ -189,5 +191,64 @@ export class TaskService {
       relations: ['company', 'assignedTo'],
     });
 
+  }
+
+  async getPaginatedTasks(user: JwtPayload, paginationDto?: PaginationDto): Promise<Task[]> {
+    const company = await this.companyRepository.findOne({
+      where: { code: user.companyCode },
+      select: ['id'],
+    });
+
+    const limit = paginationDto?.limit ? paginationDto.limit : 20;
+    const offset = paginationDto?.offset ? paginationDto.offset : 0;
+    if (!company) {
+      throw new NotFoundException('Company not found');
+    }
+
+    return this.taskRepository.find({
+      where: { company: { id: company.id } },
+      take: limit,
+      skip: offset,
+      select: TaskSelectOptions,
+      relations: ['company', 'assignedTo'],
+    });
+  }
+
+  async gettasksbymonth(year: number, month: number, companyCode: string): Promise<Task[]> {
+    const company = await this.companyRepository.findOne({
+      where: { code: companyCode },
+      select: ['id'],
+    });
+    if (!company) {
+      throw new NotFoundException('Company not found');
+    }
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+    return this.taskRepository.find({
+      where: {
+        company: { id: company.id },
+        dueDate: Between(startDate, endDate),
+      },
+      select: TaskSelectOptions,
+      relations: ['company', 'assignedTo'],
+    });
+  }
+
+  async markAsDone(id:string, user: JwtPayload){
+    
+    const task = await this.taskRepository.findOne({
+      where: { id: parseInt(id), company: { code: user.companyCode } },
+      relations: [ 'assignedTo'],
+    });
+
+    if (!task || task.completed) {
+      throw new NotFoundException('Failed to fetch updated task');
+    }
+    if(task.assignedTo.id !== user.sub){
+      throw new NotFoundException('You are not assigned to this task');
+    }
+    this.taskRepository.merge(task, { completed: true });
+    await this.taskRepository.save(task);
+    this.eventEmitter.emit('task.completed', task);
   }
 }

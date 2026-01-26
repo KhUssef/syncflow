@@ -7,6 +7,7 @@ import { ConnectedUser } from '../auth/decorator/user.decorator';
 import { JwtPayload } from '../auth/jwt-payload.interface';
 import { Observable, of } from 'rxjs';
 import { TaskEvents } from './task.events';
+import { PaginationDto } from 'src/services/pagination.dto';
 
 @Controller('tasks')
 @UseGuards(JwtAuthGuard)
@@ -28,24 +29,25 @@ export class TaskController {
     return stream;
   }
 
-  @Get()
-  findAll() {
-    return this.taskService.findAll();
-  }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.taskService.findOne(+id);
-  }
+  // @Get(':id')
+  // findOne(@Param('id') id: string, @ConnectedUser() user: JwtPayload) {
+  //   return this.taskService.findOne(+id, user);
+  // }
 
   @Get('user/:userId')
   getTasksByUser(@Param('userId') userId: string) {
     return this.taskService.getTasksByUser(+userId);
   }
 
-  @Get('company/:companyId')
-  getTasksByCompany(@Param('companyId') companyId: string) {
-    return this.taskService.getTasksByCompany(+companyId);
+  @Get('paginated')
+  getTasksByCompany(@ConnectedUser() user: JwtPayload, @Body() paginationDto?: PaginationDto) {
+    return this.taskService.getPaginatedTasks(user, paginationDto);
+  }
+
+  @Get("byMonth/:year/:month")
+  getTasksByMonth(@Param('year') year: string, @Param('month') month: string, @ConnectedUser() user: JwtPayload) {
+    return this.taskService.gettasksbymonth(+year, +month, user.companyCode);
   }
 
   @Get('by-day/:date')
@@ -67,5 +69,11 @@ export class TaskController {
   async remove(@Param('id') id: string, @ConnectedUser() user: JwtPayload) {
     await this.taskService.remove(+id, user);
     return { success: true };
+  }
+
+  @Post("done/:id")
+  async markasDone(@Param("id") id : string, @ConnectedUser() user : JwtPayload){
+    await this.taskService.markAsDone(id, user);
+    return {success : true}
   }
 }
