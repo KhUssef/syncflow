@@ -14,6 +14,7 @@ import { CompanyService } from 'src/company/company.service';
 import { Company } from 'src/company/entities/company.entity';
 import { NoteLineService } from 'src/note/noteLine.service';
 import { PaginationDto } from 'src/services/pagination.dto';
+import { NoteSelectOptions } from './dto/select-note.dto';
 
 @Injectable()
 export class NoteService extends SharedService<Note> {
@@ -41,13 +42,15 @@ export class NoteService extends SharedService<Note> {
     }
     const updated = this.repository.merge(entity, data);
     console.log('Updated entity:', updated);
-    const savedEntity = await this.repository.save(updated);
+     await this.repository.save(updated);
+    const savedEntity = await this.findOne(id);
     return savedEntity;
   }
 
   async getNoteById(noteId: number): Promise<Note | null> {
     const temp = await this.repo.findOne({
       where: { id: noteId },
+      select: NoteSelectOptions,
       relations: ['company'],
     });
     return temp;
@@ -108,10 +111,13 @@ export class NoteService extends SharedService<Note> {
     if (Note == null) {
       throw new ConflictException('Note already exists');
     }
-    console.log(Note);
     const lineCount = data.lineCount || 10;
     await this.NoteLineService.createMultiple(lineCount, Note.id);
-    return Note;
+    const newNote = await this.getNoteById(Note.id);
+    if(!newNote){
+      throw new InternalServerErrorException('Failed to retrieve the newly created note');
+    }
+    return newNote;
   }
 
   async getallIds(user: JwtPayload, paginationDto?: PaginationDto): Promise<number[]> {
@@ -123,7 +129,7 @@ export class NoteService extends SharedService<Note> {
   async getNotesInfo(user: JwtPayload, paginationDto?: PaginationDto): Promise<{ id: number; title: string; lineCount: number; }[]> {
     const take = paginationDto?.limit || 20;
     const skip = paginationDto?.offset || 0;
-    const notes = await this.repo.find({ where: { company: { code: user.companyCode } }, select: ['id', 'title', 'lineCount'], take, skip });
+    const notes = await this.repo.find({ where: { company: { code: user.companyCode } }, select: NoteSelectOptions, take, skip });
     return notes.map(note => ({
       id: note.id,
       title: note.title,

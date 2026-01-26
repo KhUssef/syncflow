@@ -1,10 +1,11 @@
 import { Type } from "class-transformer";
-import { Min } from "class-validator";
+import { IsOptional, Min } from "class-validator";
 
 export class CreateNoteDto {
     title: string;
     
     @Type(() => Number)
     @Min(0)
+    @IsOptional()
     lineCount: number;
 }

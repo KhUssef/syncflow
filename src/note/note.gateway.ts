@@ -239,7 +239,6 @@ export class Notesocket implements OnGatewayConnection, OnGatewayDisconnect, OnG
     @ConnectedUser() user: JwtPayload,
     @ConnectedSocket() client: Socket,
   ) {
-    console.log("kys");
     const noteId = client.data.noteId;
     console.log(`Received softunlock request from ${user.username} for note ${noteId} at line ${data.lineNumber}`);
 
@@ -259,7 +258,7 @@ export class Notesocket implements OnGatewayConnection, OnGatewayDisconnect, OnG
 
   @SubscribeMessage('alterNote')
   async handleNoteAltered(
-    @MessageBody() note: UpdateNoteLineDto,
+    @MessageBody(WsObjectConvertPipe) note: UpdateNoteLineDto,
     @ConnectedUser() user: JwtPayload,
     @ConnectedSocket() client: Socket,
   ) {
@@ -288,7 +287,7 @@ export class Notesocket implements OnGatewayConnection, OnGatewayDisconnect, OnG
       // User holds the lock, allow partial update
       console.log('Updating note line:', note);
       const updatedNoteLine = await this.noteLineService.update(
-        note.noteId,
+        noteId,
         note,
         user.sub,
       );

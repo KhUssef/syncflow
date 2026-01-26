@@ -19,10 +19,23 @@ import { ConnectedUser } from 'src/auth/decorator/user.decorator';
 import { JwtPayload } from 'src/auth/jwt-payload.interface';
 import { Role } from 'src/enum/role.enum';
 import { PaginationDto } from 'src/services/pagination.dto';
+import { compare } from 'bcrypt';
+import { CompanyAccessGuard } from 'src/company-access/company-access.guard';
+import { Chat } from './entities/chat.entity';
 
+
+
+/*
+
+
+!!!
+  when adding new routes (specifically those like post and put) always put the id of the resource in the param and add the company-access guard to ensure only users from the same company can access the resource
+  see   @Get(':id/messages') for example
+!!!
+
+*/
 
 @Controller('chat')
-
 @UseGuards(JwtAuthGuard)
 export class ChatController {
   constructor(private readonly chatService: ChatService) { }
@@ -42,24 +55,28 @@ export class ChatController {
     return this.chatService.getCompanyChats(user, paginationDto);
   }
 
+
+  @UseGuards(CompanyAccessGuard(Chat))
   @Get(':id/messages')
   async getChatMessages(
     @Param('id', ParseIntPipe) chatId: number,
     @ConnectedUser() user: JwtPayload,
     @Body() PaginationDto: PaginationDto,
-
-
   ) {
     return this.chatService.getChatMessages(chatId, user, PaginationDto);
   }
 
-  @Post('message')
+
+  @UseGuards(CompanyAccessGuard(Chat))
+  @Post(':id/message')
   async sendMessage(
     @Body() sendMessageDto: SendMessageDto,
     @ConnectedUser() user: JwtPayload,
+    @Param('id', ParseIntPipe) chatId: number,
   ) {
-    return this.chatService.sendMessage(sendMessageDto, user);
+    return this.chatService.sendMessage(sendMessageDto, user, chatId);
   }
+
 
   @Delete(':id')
   @UseGuards(RolesGuard)

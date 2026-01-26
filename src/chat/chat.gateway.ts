@@ -173,12 +173,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
         return { success: false, error: 'Message is too long' };
       }
 
-      const message = await this.chatService.sendMessage(data, user);
+      const message = await this.chatService.sendMessage(data, user, client.data.roomId);
       
       // Send to company room (this will include the sender)
-      const chatRoom = `${user.companyCode}-${data.chatId}`;
+      const chatRoom = `${user.companyCode}-${client.data.roomId}`;
       this.server.to(chatRoom).emit('newMessage', {
-        chatId: data.chatId,
+        chatId: client.data.roomId,
         message,
       });
 
@@ -199,7 +199,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
   */
   @SubscribeMessage('joinChat')
   async handleJoinChat(
-    @MessageBody() data: { chatId: number },
+    @MessageBody(WsObjectConvertPipe) data: { chatId: number },
     @ConnectedSocket() client: Socket,
     @ConnectedUser() user: JwtPayload,
   ) {
@@ -241,7 +241,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 
   @SubscribeMessage('leaveChat')
   async handleLeaveChat(
-    @MessageBody() data: { chatId: number },
+    @MessageBody(WsObjectConvertPipe) data: { chatId: number },
     @ConnectedSocket() client: Socket,
     @ConnectedUser() user: JwtPayload,
   ) {
@@ -269,7 +269,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 
   @SubscribeMessage('typing')
   async handleTyping(
-    @MessageBody() data: { chatId: number, isTyping: boolean },
+    @MessageBody(WsObjectConvertPipe) data: { chatId: number, isTyping: boolean },
     @ConnectedSocket() client: Socket,
     @ConnectedUser() user: JwtPayload,
   ) {
@@ -345,6 +345,5 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     // setInterval(() => {
     //   this.cleanupStaleConnections();
     // }, 5 * 60 * 1000);
-    console.log("kys");
   }
 }

@@ -22,8 +22,8 @@ export class NoteLineService extends SharedService<NoteLine> {
     super(repo, cEventService);
   }
 
-  async update(id = 0, data: UpdateNoteLineDto, userID?): Promise<DeepPartial<NoteLine> | null> {
-    const entity = await this.repository.findOne({ where: { lineNumber: data.lineNumber, note: { id: data.noteId } } });
+  async update(id:number, data: UpdateNoteLineDto, userID?): Promise<NoteLine | null> {
+    const entity = await this.repository.findOne({ where: { lineNumber: data.lineNumber, note: { id: id } } });
     const user = await this.repository.manager.getRepository(User).findOne({ where: { id: userID } });
     if (user == null) {
       throw new InternalServerErrorException(`User with id ${userID} not found`);
@@ -31,19 +31,18 @@ export class NoteLineService extends SharedService<NoteLine> {
     if (!entity) {
       throw new NotFoundException(`Entity with id ${id} not found`);
     }
-    const { noteId, lineNumber, ...act_data } = data;
+    const { lineNumber, ...act_data } = data;
     console.log("act_data", act_data as DeepPartial<NoteLine>);
     const updated = await super.update(entity.id, act_data as DeepPartial<NoteLine>, userID);
     if (updated == null) {
       return null;
     }
     this.repository.update(entity.id, { lastEditedBy: user });
-    return {
-      ...data,
-      updatedAt: updated.updatedAt,
-    }
+    const newData = await this.repository.findOne({ where: { id: entity.id }, select: { content: true, color: true, fontSize: true, highlighted: true, lastEditedBy : {id: true} } });
+    return newData;
   }
-  async updateWithoutEvent(id = 0, data: UpdateNoteLineDto, userID?): Promise<DeepPartial<NoteLine> | null> {
+
+  async updateWithoutEvent(id, data: UpdateNoteLineDto, userID?): Promise<DeepPartial<NoteLine> | null> {
     const entity = await this.repository.findOne({ where: { lineNumber: data.lineNumber, note: { id: data.noteId } } });
     const user = await this.repository.manager.getRepository(User).findOne({ where: { id: userID } });
     if (user == null) {

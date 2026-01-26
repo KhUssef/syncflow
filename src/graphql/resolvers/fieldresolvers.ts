@@ -27,4 +27,3 @@ export const Event =  {
     return res;
 }
 };
-//kys

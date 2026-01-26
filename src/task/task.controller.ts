@@ -5,9 +5,12 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ConnectedUser } from '../auth/decorator/user.decorator';
 import { JwtPayload } from '../auth/jwt-payload.interface';
-import { Observable, of } from 'rxjs';
+import { map, Observable, of } from 'rxjs';
 import { TaskEvents } from './task.events';
 import { PaginationDto } from 'src/services/pagination.dto';
+import { Company } from 'src/company/entities/company.entity';
+import { CompanyAccessGuard } from 'src/company-access/company-access.guard';
+import { Task } from './entities/task.entity';
 
 @Controller('tasks')
 @UseGuards(JwtAuthGuard)
@@ -19,6 +22,7 @@ export class TaskController {
 
   @Sse('events')
   events(@ConnectedUser() user: JwtPayload): Observable<any> {
+      console.log("SSE connected - user.sub:", user.sub); // ← Add this
     if (!user.sub) {
       return of({ type: 'error', data: 'No user ID found' });
     }
@@ -26,9 +30,12 @@ export class TaskController {
     if (!stream) {
       return of({ type: 'error', data: 'Stream not available' });
     }
-    return stream;
+    console.log("worked")
+    return stream.pipe(map(event => ({
+      data: JSON.stringify(event)
+    })));
   }
-
+  
 
   // @Get(':id')
   // findOne(@Param('id') id: string, @ConnectedUser() user: JwtPayload) {
@@ -60,17 +67,20 @@ export class TaskController {
     return this.taskService.create(createTaskDto, user);
   }
 
+  @UseGuards(CompanyAccessGuard(Task))
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateTaskDto: UpdateTaskDto, @ConnectedUser() user: JwtPayload) {
     return this.taskService.update(+id, updateTaskDto, user);
   }
 
+  @UseGuards(CompanyAccessGuard(Task))
   @Delete(':id')
   async remove(@Param('id') id: string, @ConnectedUser() user: JwtPayload) {
     await this.taskService.remove(+id, user);
     return { success: true };
   }
 
+  @UseGuards(CompanyAccessGuard(Task))
   @Post("done/:id")
   async markasDone(@Param("id") id : string, @ConnectedUser() user : JwtPayload){
     await this.taskService.markAsDone(id, user);

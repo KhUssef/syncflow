@@ -92,7 +92,7 @@ export class SharedService<T extends Note | NoteLine | Task | User | Event> {
     }
   }
 
-  async update(id: number, data: DeepPartial<T>, userID?): Promise<DeepPartial<T> | null> {
+  async update(id: number, data: DeepPartial<T>, userID?): Promise<T | null> {
   const entity = await this.findOne(id);
   console.log('Entity found for update:', entity);
   if (!entity) {

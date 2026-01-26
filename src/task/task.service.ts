@@ -44,7 +44,7 @@ export class TaskService {
     let assignedTo: User | undefined = undefined;
     if (createTaskDto.assignedToId) {
       const foundUser = await this.userRepository.findOne({
-        where: { id: createTaskDto.assignedToId }
+        where: { id: createTaskDto.assignedToId, company : { id: company.id } }
       });
       if (!foundUser) {
         throw new NotFoundException('Assigned user not found');
@@ -61,30 +61,42 @@ export class TaskService {
       assignedTo
     };
 
-    const savedTask = await this.sharedService.create(taskData, user.sub);
+    const temp = await this.sharedService.create(taskData, user.sub, );
+    if( !temp ){
+      throw new NotFoundException('Failed to create task');
+    }
+    const savedTask = await this.taskRepository.findOne({
+      where: {
+        id:temp.id,
+      },
+      select: TaskSelectOptions,
+      relations: ['assignedTo', 'company'],
+    });
+    
     if (!savedTask) {
       throw new NotFoundException('Failed to create task');
     }
+    savedTask.assignedTo ;
 
     if (isTomorrow(savedTask.dueDate)) {
       this.eventEmitter.emit('task.dueTomorrow', savedTask);
     }
 
-    return this.findOne(savedTask.id);
+    return savedTask;
   }
 
-  async findAll(): Promise<Task[]> {
-    return this.taskRepository.find({
-      select: TaskSelectOptions,
-      relations: ['company', 'assignedTo'],
-    });
-  }
+  // async findAll(): Promise<Task[]> {
+  //   return this.taskRepository.find({
+  //     select: TaskSelectOptions,
+  //     relations: ['company', 'assignedTo'],
+  //   });
+  // }
 
   async findOne(id: number): Promise<Task> {
     const task = await this.taskRepository.findOne({
       where: { id },
       select: TaskSelectOptions,
-      relations: ['company', 'assignedTo'],
+      relations: ['assignedTo'],
     });
 
     if (!task) {
@@ -95,13 +107,16 @@ export class TaskService {
   }
 
   async update(id: number, updateTaskDto: UpdateTaskDto, user: JwtPayload): Promise<Task> {
-    const task = await this.findOne(id);
+    const task = await this.taskRepository.findOne({
+      where: { id, company: { code: user.companyCode } },
+      relations: ['assignedTo'],
+    });
 
     // Handle user assignment
     let assignedTo: User | undefined = undefined;
     if (updateTaskDto.assignedToId) {
       const foundUser = await this.userRepository.findOne({
-        where: { id: updateTaskDto.assignedToId }
+        where: { id: updateTaskDto.assignedToId, company: { code: user.companyCode } }
       });
       if (!foundUser) {
         throw new NotFoundException('Assigned user not found');
@@ -115,28 +130,16 @@ export class TaskService {
     };
 
     const updatedTask = await this.sharedService.update(id, updateData, user.sub);
-    if (!updatedTask || !updatedTask.id) {
+    if (!updatedTask || !updatedTask.id || !updatedTask.dueDate) {
       throw new NotFoundException('Failed to update task');
     }
 
-    const completeTask = await this.taskRepository.findOne({
-      where: { id: updatedTask.id },
-      relations: ['company', 'company.users', 'assignedTo'],
-    });
 
-    if (!completeTask) {
-      throw new NotFoundException('Failed to fetch updated task');
+    if (updateTaskDto.dueDate && isTomorrow(updatedTask.dueDate)) {
+      this.eventEmitter.emit('task.dueTomorrow', updatedTask);
     }
 
-    // if (updateTaskDto.completed && !task.completed) {
-    //   this.eventEmitter.emit('task.completed', completeTask);
-    // }
-
-    if (updateTaskDto.dueDate && isTomorrow(completeTask.dueDate)) {
-      this.eventEmitter.emit('task.dueTomorrow', completeTask);
-    }
-
-    return this.findOne(updatedTask.id);
+    return updatedTask;
   }
 
   async remove(id: number, user: JwtPayload): Promise<void> {
@@ -164,13 +167,15 @@ export class TaskService {
     });
   }
 
-  async getTasksByCompany(companyId: number): Promise<Task[]> {
-    return this.taskRepository.find({
-      where: { company: { id: companyId } },
-      select: TaskSelectOptions,
-      relations: ['company', 'assignedTo'],
-    });
-  }
+  // async getTasksByCompany(companyId: number): Promise<Task[]> {
+  //   return this.taskRepository.find({
+  //     where: { company: { id: companyId } },
+  //     select: TaskSelectOptions,
+  //     relations: ['company', 'assignedTo'],
+  //   });
+  // }
+
+
   async gettasksbyday(date: string, companyCode: string): Promise<Task[]> {
     const endOfDay = new Date(date);
     endOfDay.setHours(0, 0, 0, 0);
@@ -230,7 +235,7 @@ export class TaskService {
         dueDate: Between(startDate, endDate),
       },
       select: TaskSelectOptions,
-      relations: ['company', 'assignedTo'],
+      relations: ['assignedTo'],
     });
   }
 
@@ -239,6 +244,10 @@ export class TaskService {
     const task = await this.taskRepository.findOne({
       where: { id: parseInt(id), company: { code: user.companyCode } },
       relations: [ 'assignedTo'],
+    });
+    const users = await this.userRepository.find({
+      where: { company: { code: user.companyCode } },
+      select: { id : true },
     });
 
     if (!task || task.completed) {
@@ -249,6 +258,6 @@ export class TaskService {
     }
     this.taskRepository.merge(task, { completed: true });
     await this.taskRepository.save(task);
-    this.eventEmitter.emit('task.completed', task);
+    this.eventEmitter.emit('task.completed', task, users);
   }
 }

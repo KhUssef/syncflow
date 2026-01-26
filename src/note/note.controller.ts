@@ -6,6 +6,8 @@ import { JwtPayload } from 'src/auth/jwt-payload.interface';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { PaginationDto } from 'src/services/pagination.dto';
 import { NoteLineService } from './noteLine.service';
+import { CompanyAccessGuard } from 'src/company-access/company-access.guard';
+import { Note } from './entities/note.entity';
 
 @Controller('note')
 @UseGuards(JwtAuthGuard)
@@ -24,9 +26,10 @@ export class NoteController {
     return this.noteService.getNotesInfo(user, paginationDto);
   }
 
-  @Get(':noteId/lines')
+  @UseGuards(CompanyAccessGuard(Note))
+  @Get(':id/lines')
   async getNoteLines(
-    @Param('noteId') noteId: string,
+    @Param('id') noteId: string,
     @Query('start') start?: string,
     @Query('limit') limit?: string,
     @ConnectedUser() user?: JwtPayload
@@ -34,9 +37,6 @@ export class NoteController {
     const note = await this.noteService.getNoteById(+noteId);
     if (!note) {
       throw new ForbiddenException(`Note with ID ${noteId} not found`);
-    }
-    if (user && note.company.code !== user.companyCode) {
-      throw new ForbiddenException(`You do not have access to this note`);
     }
     return this.noteLineService.getNoteLinesByNoteId(
       +noteId,
@@ -50,13 +50,13 @@ export class NoteController {
     return this.noteService.createNote(createNoteDto, user);
   }
 
+  @UseGuards(CompanyAccessGuard(Note))
   @Post('/:id/create-lines')
   bulkCreate(@ConnectedUser() user: JwtPayload, @Param('id') id: string) {
-    if(!this.noteService.checkifUserInNote(user, +id)){
-      throw new Error("User not authorized to add lines to this note"); 
-    }
+    
     return this.noteLineService.createMultiple(10, +id);
   }
+  
 
 //   @Get()
 //   findAll() {

@@ -10,20 +10,19 @@ import { Roles } from 'src/auth/decorator/roles.decorator';
 import { Role } from 'src/enum/role.enum';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Company } from 'src/company/entities/company.entity';
+import { CompanyAccessGuard } from 'src/company-access/company-access.guard';
+import { RolesGuard } from 'src/auth/role-guard';
 
 @Controller('users')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles([Role.MANAGER])
 export class UserController {
   constructor(
     private readonly userService: UserService,
     private readonly userEvents: UserEvents,
     private readonly eventEmitter: EventEmitter2
   ) {}
-
-  @Get()
-  async findAll(): Promise<User[]> {
-    return this.userService.findAll();
-  }
 
   @Get('deleted')
   async findDeleted(): Promise<User[]> {
@@ -32,26 +31,19 @@ export class UserController {
 
   @Get('company')
   async getUsersByCompany(@ConnectedUser() user: JwtPayload): Promise<User[]> {
-    return this.userService.findAll();
+    return this.userService.getUsersByCompany(user.companyCode);
   }
 
-  @Get('company/:companyId')
-  async getUsersByCompanyId(@Param('companyId') companyId: string): Promise<User[]> {
-    return this.userService.getUsersByCompany(+companyId);
-  }
 
-  @Get('by-username/:username/:companyId')
+  @Get('by-username/:username')
   async findByUsername(
     @Param('username') username: string,
-    @Param('companyId') companyId: string
+    @ConnectedUser() user: JwtPayload
   ): Promise<User | null> {
-    return this.userService.findOneByUsername(username, +companyId);
+    return this.userService.findOneByUsername(username, user.companyCode);
   }
 
-  @Get(':id')
-  async findOne(@Param('id') id: string): Promise<User> {
-    return this.userService.findOne(+id);
-  }
+  
 
   @Sse('events')
   events(@ConnectedUser() user: JwtPayload): Observable<any> {
@@ -65,14 +57,23 @@ export class UserController {
     return stream;
   }
 
-  @Get('user-names')
-  @Roles([Role.MANAGER])
-  async getUserNames(@ConnectedUser() user: JwtPayload): Promise<string[]> {
+  @Get('usernames')
+  async getUserNames(@ConnectedUser() user: JwtPayload): Promise<{username: string, id: number}[]> {
+    console.log("Controller: Fetching usernames for company code:", user.companyCode);
     const res = await this.userService.getUsernames(user.companyCode);
     console.log(res);
     return res;
   }
 
+
+  @Get(':id')
+  @UseGuards(CompanyAccessGuard(User))
+  async findOne(@Param('id') id: string): Promise<User> {
+    return this.userService.findOne(+id);
+  }
+
+  
+  @UseGuards(CompanyAccessGuard(User))
   @Patch(':id')
   async update(
     @Param('id') id: string,
@@ -84,6 +85,7 @@ export class UserController {
     return updatedUser;
   }
 
+  @UseGuards(CompanyAccessGuard(User))
   @Delete(':id')
   async remove(@Param('id') id: string, @ConnectedUser() user: JwtPayload) {
     const userToDelete = await this.userService.findOne(+id);
@@ -92,6 +94,7 @@ export class UserController {
     return { success: true };
   }
 
+  @UseGuards(CompanyAccessGuard(User))
   @Post(':id/recover')
   async recover(@Param('id') id: string, @ConnectedUser() user: JwtPayload): Promise<User> {
     const recoveredUser = await this.userService.recover(+id, user);

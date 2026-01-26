@@ -109,7 +109,7 @@ export class HistoryService {
     const companyEntity = await this.companyRepo.findOne({ where: { code: companyCode } });
     if (!companyEntity) throw new Error('Company not found');
 
-    const user = await this.userService.findOneByUsername(username, companyEntity.id);
+    const user = await this.userService.findOneByUsername(username, companyEntity.code);
     if (!user) throw new Error('User not found');
 
     const query = this.repo

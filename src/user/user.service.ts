@@ -12,6 +12,7 @@ import { Role } from '../enum/role.enum';
 import { Operation } from '../history/entities/operation.entity';
 import { Target } from '../enum/target.enum';
 import { OperationType } from '../enum/operation-type';
+import { UserSelectOptions } from './dto/select-user.dto';
 
 @Injectable()
 export class UserService {
@@ -34,6 +35,7 @@ export class UserService {
   async findOne(id: number): Promise<User> {
     const user = await this.userRepository.findOne({
       where: { id },
+      select: UserSelectOptions,
       relations: ['company'],
     });
     if (!user) {
@@ -42,16 +44,18 @@ export class UserService {
     return user;
   }
 
-  async findOneByUsername(username: string, companyId: number): Promise<User | null> {
+  async findOneByUsername(username: string, code: string): Promise<User | null> {
     return this.userRepository.findOne({
-      where: { username, company: { id: companyId } },
+      where: { username, company: { code: code } },
+      select: UserSelectOptions,
       relations: ['company'],
     });
   }
 
-  async getUsersByCompany(companyId: number): Promise<User[]> {
+  async getUsersByCompany(code: string): Promise<User[]> {
     return this.userRepository.find({
-      where: { company: { id: companyId } },
+      where: { company: { code: code } },
+      select : UserSelectOptions,
       relations: ['company'],
     });
   }
@@ -59,6 +63,7 @@ export class UserService {
   async findDeleted(): Promise<User[]> {
     return this.userRepository.find({
       where: { deletedAt: Not(IsNull()) },
+      select: UserSelectOptions,
       relations: ['company'],
       withDeleted: true,
     });
@@ -69,7 +74,7 @@ export class UserService {
     try {
     restData.company = company.id;
     }catch (error) {
-      console.log("kys");}
+      console.log("error");}
     const {salt, password, ...actdata}  = restData;
     
     const operation = this.operationRepository.create({
@@ -89,17 +94,18 @@ export class UserService {
   async update(id: number, updateUserDto: UpdateUserDto, user: JwtPayload): Promise<User> {
     const existingUser = await this.findOne(id);
     
-    const updatedUser = await this.userRepository.save({
+    await this.userRepository.save({
       ...existingUser,
       ...updateUserDto
     });
+    const updatedUser = await this.findOne(id);
 
     if (!updatedUser) {
       throw new NotFoundException('User not found');
     }
 
-    const performingUser = await this.findOne(user.sub);
-    await this.createOperation(performingUser, OperationType.UPDATE, updatedUser);
+    // const performingUser = await this.findOne(user.sub);
+    // await this.createOperation(performingUser, OperationType.UPDATE, updatedUser);
 
     return updatedUser;
   }
@@ -109,12 +115,13 @@ export class UserService {
     await this.userRepository.softDelete(id);
     
     const performingUser = await this.findOne(user.sub);
-    await this.createOperation(performingUser, OperationType.DELETE, userToDelete);
+    // await this.createOperation(performingUser, OperationType.DELETE, userToDelete);
   }
 
   async recover(id: number, user: JwtPayload): Promise<User> {
     const userToRecover = await this.userRepository.findOne({
       where: { id },
+      select: UserSelectOptions,
       withDeleted: true
     });
     
@@ -124,21 +131,18 @@ export class UserService {
 
     await this.userRepository.restore(id);
     
-    const performingUser = await this.findOne(user.sub);
-    await this.createOperation(performingUser, OperationType.RECOVER, userToRecover);
+    // const performingUser = await this.findOne(user.sub);
+    // await this.createOperation(performingUser, OperationType.RECOVER, userToRecover);
 
     return userToRecover;
   }
-  async getUsernames(companyCode: string): Promise<string[]> {
-    const company = await this.companyRepository.findOne({
-      where: { code: companyCode },
-      select: ['id'],
-    });
+  async getUsernames(companyCode: string): Promise<{username: string, id: number}[]> {
+    console.log("Fetching usernames for company code:", companyCode);
     
     const users = await this.userRepository.find({
-      where: { company: { id: company?.id } },
-      select: ['username'],
+      where: { company: { code: companyCode } },
+      select: ['username', "id"],
     });
-    return users.map(user => user.username);
+    return users
   }
 }
