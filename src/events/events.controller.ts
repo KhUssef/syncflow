@@ -17,4 +17,24 @@ export class EventsController {
     return this.service.create(dto, user.sub, user.companyCode);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get()
+  getAllEvents(@ConnectedUser() user: JwtPayload) {
+    return this.service.getAll(user.companyCode);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('by-month/:date')
+  EventByMonth(@Param('date') date: string, @ConnectedUser() user: JwtPayload) {
+    const dateObj = new Date(date);
+    return this.service.EventByMonth(user.companyCode, dateObj);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('by-day/:date')
+  EventByDay(@Param('date') date: string, @ConnectedUser() user: JwtPayload) {
+    const dateObj = new Date(date);
+    return this.service.EventByDay(user.companyCode, dateObj);
+  }
+
 }
