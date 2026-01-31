@@ -11,5 +11,9 @@ export class CompanyController {
   ): Promise<Company> {
     return this.companyService.createCompanyWithManager(dto);
   }
-}
 
+  @Get(':name')
+  async isNameTaken(@Param('name') name: string): Promise<boolean> {
+    return this.companyService.isNameTaken(name);
+  } 
+}

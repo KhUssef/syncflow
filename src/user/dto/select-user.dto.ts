@@ -7,6 +7,7 @@ export const UserSelectOptions: FindOptionsSelect<User> = {
   username: true,
   role: true,
   company: {
-    id: true
+    id: true,
+    code: true,
   }
 };

@@ -65,4 +65,9 @@ export class CompanyService {
   async getCompanyById(id: number): Promise<Company | null> {
     return this.companyRepository.findOne({ where: { id },select:{name:true, code:true, id:false, deletedAt:false}},);
   }
+
+  async isNameTaken(name: string): Promise<boolean> {
+    const company = await this.companyRepository.findOne({ where: { name:name } });
+    return !!company;
+  }
 }
