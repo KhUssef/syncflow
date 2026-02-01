@@ -23,6 +23,7 @@ export class NoteLineService extends SharedService<NoteLine> {
   }
 
   async update(id:number, data: UpdateNoteLineDto, userID?): Promise<NoteLine | null> {
+    console.log("Update called with id:", data);
     const entity = await this.repository.findOne({ where: { lineNumber: data.lineNumber, note: { id: id } } });
     const user = await this.repository.manager.getRepository(User).findOne({ where: { id: userID } });
     if (user == null) {
@@ -38,7 +39,7 @@ export class NoteLineService extends SharedService<NoteLine> {
       return null;
     }
     this.repository.update(entity.id, { lastEditedBy: user });
-    const newData = await this.repository.findOne({ where: { id: entity.id }, select: { content: true, color: true, fontSize: true, highlighted: true, lastEditedBy : {id: true} } });
+    const newData = await this.repository.findOne({ where: { id: entity.id }, select: { lineNumber : true , content: true, color: true, fontSize: true, highlighted: true, lastEditedBy : {id: true} } });
     return newData;
   }
 

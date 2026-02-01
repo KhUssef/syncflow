@@ -63,7 +63,13 @@ export class Notesocket implements OnGatewayConnection, OnGatewayDisconnect, OnG
       try {
         console.log("Note Socket verifying token");
         console.log("Handshake auth:", socket.handshake.auth);
-        const token = socket.handshake.auth.token;
+        let token = socket.handshake.auth.token;
+        if(!token) {
+          throw new Error('No token provided');
+        }
+        if(token.startsWith('Bearer ')) {
+          token = token.slice(7, token.length).trim();
+        }
         const user = jwt.verify(token, this.secret) as unknown as JwtPayload;
         console.log("Note Socket verified user:", user);
         socket.data.user = user;
@@ -294,6 +300,7 @@ export class Notesocket implements OnGatewayConnection, OnGatewayDisconnect, OnG
       if (updatedNoteLine == null) {
         return;
       }
+      console.log('Note line updated successfully:', updatedNoteLine);
       this.server.to(user.companyCode + noteId.toString()).emit('noteUpdated', updatedNoteLine);
     } catch (error) {
       console.error('Error updating note line:', error);
