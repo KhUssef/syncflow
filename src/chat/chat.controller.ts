@@ -22,6 +22,7 @@ import { PaginationDto } from 'src/services/pagination.dto';
 import { compare } from 'bcrypt';
 import { CompanyAccessGuard } from 'src/company-access/company-access.guard';
 import { Chat } from './entities/chat.entity';
+import { ChatResponseDto } from './dto/chat-response.dto';
 
 
 
@@ -51,7 +52,10 @@ export class ChatController {
   }
 
   @Get()
-  async getChats(@ConnectedUser() user: JwtPayload, @Body() paginationDto?: PaginationDto) {
+  async getChats(
+    @ConnectedUser() user: JwtPayload,
+    @Body() paginationDto?: PaginationDto,
+  ): Promise<ChatResponseDto[]> {
     return this.chatService.getCompanyChats(user, paginationDto);
   }
 

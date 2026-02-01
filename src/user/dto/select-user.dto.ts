@@ -9,5 +9,6 @@ export const UserSelectOptions: FindOptionsSelect<User> = {
   company: {
     id: true,
     code: true,
-  }
+  },
+  deletedAt: true,
 };

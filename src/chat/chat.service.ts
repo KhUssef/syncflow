@@ -54,14 +54,36 @@ export class ChatService {
     const skip = paginationDto?.offset || 0;
     const chats = await this.chatRepository.find({
       where: { company: { code: user.companyCode } },
-      relations: ['messages'],
+      relations: ['messages', 'messages.sender'],
       order: { updatedAt: 'DESC' },
       take,
       skip,
-      select: ['id', 'name', 'type', 'updatedAt'],
+      select: ['id', 'name', 'type', 'createdAt', 'updatedAt'],
     });
 
-    return chats
+    return chats.map((chat) => {
+      const messages = chat.messages ?? [];
+      const sortedMessages = messages
+        .slice()
+        .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+      const messageCount = sortedMessages.length;
+      const lastMessageEntity = sortedMessages[messageCount - 1];
+
+      return {
+        id: chat.id,
+        name: chat.name,
+        type: chat.type,
+        createdAt: chat.createdAt,
+        messageCount,
+        lastMessage: lastMessageEntity
+          ? {
+              content: lastMessageEntity.content,
+              senderUsername: lastMessageEntity.sender?.username ?? 'Unknown',
+              createdAt: lastMessageEntity.createdAt,
+            }
+          : undefined,
+      };
+    });
   }
 
   async getChatMessages(chatId: number, user: JwtPayload, paginationDto?: PaginationDto): Promise<MessageResponseDto[]> {

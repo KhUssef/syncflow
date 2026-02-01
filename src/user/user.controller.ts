@@ -65,13 +65,19 @@ export class UserController {
     return res;
   }
 
+   @Get('current')
+  async currentUser(@ConnectedUser() user : JwtPayload): Promise<User> {
+    console.log(this.userService.findOne(user.sub));
+    return this.userService.findOne(user.sub);
+  }
 
-  @Get(':id')
   @UseGuards(CompanyAccessGuard(User))
+  @Get(':id')
   async findOne(@Param('id') id: string): Promise<User> {
     return this.userService.findOne(+id);
   }
 
+ 
   
   @UseGuards(CompanyAccessGuard(User))
   @Patch(':id')

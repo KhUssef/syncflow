@@ -65,7 +65,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
           try {
             console.log("Chat Socket verifying token");
             console.log("Handshake auth:", socket.handshake.auth);
-            const token = socket.handshake.auth.token;
+            let token = socket.handshake.auth.token;
+            if(!token) {
+              throw new Error('No token provided');
+            }
+            if(token.startsWith('Bearer ')) {
+              token = token.slice(7, token.length).trim();
+            }
             const user = jwt.verify(token, this.secret) as unknown as JwtPayload;
             console.log("Note Socket verified user:", user);
             socket.data.user = user;

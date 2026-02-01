@@ -146,10 +146,7 @@ export class TaskService {
     await this.sharedService.delete(id, user.sub);
   }
 
-  async getTasksByUser(userId: number): Promise<Task[]> {
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-
+  async getAssignedTasksByUser(userId: number, paginationDto?: PaginationDto): Promise<Task[]> {
     return this.taskRepository.find({
       where: [
       {
@@ -158,11 +155,57 @@ export class TaskService {
       },
       {
         assignedTo: { id: userId },
+      },
+      
+      ],
+      select: TaskSelectOptions,
+      take: paginationDto?.limit,
+      skip: paginationDto?.offset,
+      relations: ['company', 'assignedTo'],
+    });
+  }
+
+
+  async getCompletedTasksByUser(userId: number, paginationDto?: PaginationDto): Promise<Task[]> {
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+    return this.taskRepository.find({
+      where: [
+      {
+        assignedTo: { id: userId },
+        completed: true,
+      },
+      {
+        assignedTo: { id: userId },
         dueDate: MoreThan(oneWeekAgo),
       },
       
       ],
       select: TaskSelectOptions,
+      take: paginationDto?.limit,
+      skip: paginationDto?.offset,
+      relations: ['company', 'assignedTo'],
+    });
+  }
+  async getTasksByUser(userId: number, paginationDto?: PaginationDto): Promise<Task[]> {
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+    return this.taskRepository.find({
+      where: [
+      {
+        assignedTo: { id: userId },
+      },
+      {
+        assignedTo: { id: userId },
+        dueDate: MoreThan(oneWeekAgo),
+      },
+      
+      ],
+      select: TaskSelectOptions,
+      take: paginationDto?.limit,
+      skip: paginationDto?.offset,
       relations: ['company', 'assignedTo'],
     });
   }
@@ -209,7 +252,7 @@ export class TaskService {
     if (!company) {
       throw new NotFoundException('Company not found');
     }
-
+    console.log("Fetching tasks for company ID:", company.id, "with limit:", limit, "and offset:", offset);
     return this.taskRepository.find({
       where: { company: { id: company.id } },
       take: limit,

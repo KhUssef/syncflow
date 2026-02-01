@@ -14,6 +14,12 @@ import { RolesGuard } from './role-guard';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Post('login')
+  async login(@Body() loginDto: LoginDto): Promise<{ access_token: string, refresh_token: string }> {
+    return this.authService.login(loginDto);
+  }
+  
   @UseGuards(JwtAuthGuard, RolesGuard) 
   @Roles([Role.MANAGER]) 
   @Post('create-user')
@@ -22,10 +28,6 @@ export class AuthController {
     @ConnectedUser() manager: JwtPayload
   ) {
     return this.authService.createUser(createUserDto, manager);
-  }
-  @Post('login')
-  async login(@Body() loginDto: LoginDto): Promise<{ access_token: string, refresh_token: string }> {
-    return this.authService.login(loginDto);
   }
   @Post('logout')
   @UseGuards(JwtAuthGuard)

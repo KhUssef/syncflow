@@ -30,7 +30,6 @@ export class TaskController {
     if (!stream) {
       return of({ type: 'error', data: 'Stream not available' });
     }
-    console.log("worked")
     return stream.pipe(map(event => ({
       data: JSON.stringify(event)
     })));
@@ -41,10 +40,20 @@ export class TaskController {
   // findOne(@Param('id') id: string, @ConnectedUser() user: JwtPayload) {
   //   return this.taskService.findOne(+id, user);
   // }
-
-  @Get('user/:userId')
-  getTasksByUser(@Param('userId') userId: string) {
-    return this.taskService.getTasksByUser(+userId);
+  @UseGuards(CompanyAccessGuard(Task))
+  @Get('user/:id')
+  getTasksByUser(@Param('id') userId: string, @Body() paginationDto?: PaginationDto) {
+    return this.taskService.getTasksByUser(+userId, paginationDto);
+  }
+  @UseGuards(CompanyAccessGuard(Task))
+  @Get('user/assigned/:id')
+  getAssignedTasksByUser(@Param('id') userId: string, @Body() paginationDto?: PaginationDto) {
+    return this.taskService.getAssignedTasksByUser(+userId, paginationDto);
+  }
+  @UseGuards(CompanyAccessGuard(Task))
+  @Get('user/completed/:id')
+  getCompletedTasksByUser(@Param('id') userId: string, @Body() paginationDto?: PaginationDto) {
+    return this.taskService.getCompletedTasksByUser(+userId, paginationDto);
   }
 
   @Get('paginated')

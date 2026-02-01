@@ -16,7 +16,8 @@ export const CompanyAccessGuard = (entityClass: Type): Type<CanActivate> => {
       const user: JwtPayload = request.user;
       const resourceId = request.params.id;
 
-      if (!resourceId) return true;
+      if (!resourceId || isNaN(+resourceId) || +resourceId <= 0 || resourceId==null || Number.isNaN(resourceId)) return true;
+      console.log(resourceId, request.route.path);;
 
       const repository = this.dataSource.getRepository(entityClass);
       const resource = await repository.findOne({

@@ -12,6 +12,7 @@ export const TaskSelectOptions: FindOptionsSelect<Task> = {
     id: true
   },
   assignedTo: {
-    id: true
+    id: true,
+    username: true
   }
 }; 
