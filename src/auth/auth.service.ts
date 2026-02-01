@@ -18,6 +18,7 @@ import { CreateOperationDto } from 'src/history/dto/create-operation.dto';
 import { Target } from 'src/enum/target.enum';
 import { SharedService } from 'src/services/shared.services';
 import { ConfigService } from 'src/config/config.service';
+import { UserSelectOptions } from 'src/user/dto/select-user.dto';
 
 @Injectable()
 export class AuthService {
@@ -85,6 +86,11 @@ export class AuthService {
     const newEvent = this.eventRepository.create(op);
     await this.eventRepository.save(newEvent);
     this.eventEmitter.emit(`event.created.${user.company?.code}`, newEvent);
+    const newlyCreatedUser = await this.userRepository.findOne({
+      where: { id: savedUser.id },
+      select: UserSelectOptions,
+      relations: ['company'],
+    });
     return savedUser;
   }
 
