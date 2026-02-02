@@ -111,7 +111,7 @@ export class NoteService extends SharedService<Note> {
     if (Note == null) {
       throw new ConflictException('Note already exists');
     }
-    const lineCount = data.lineCount || 10;
+    const lineCount = data.lineCount || 50;
     await this.NoteLineService.createMultiple(lineCount, Note.id);
     const newNote = await this.getNoteById(Note.id);
     if(!newNote){
