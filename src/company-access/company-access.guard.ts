@@ -23,6 +23,8 @@ export const CompanyAccessGuard = (entityClass: Type): Type<CanActivate> => {
       const resource = await repository.findOne({
         where: { id: +resourceId },
         relations: ['company'],
+        withDeleted: true
+
       });
 
       if (!resource) {

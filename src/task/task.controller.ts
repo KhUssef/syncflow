@@ -11,6 +11,7 @@ import { PaginationDto } from 'src/services/pagination.dto';
 import { Company } from 'src/company/entities/company.entity';
 import { CompanyAccessGuard } from 'src/company-access/company-access.guard';
 import { Task } from './entities/task.entity';
+import { User } from 'src/user/entities/user.entity';
 
 @Controller('tasks')
 @UseGuards(JwtAuthGuard)
@@ -40,7 +41,7 @@ export class TaskController {
   // findOne(@Param('id') id: string, @ConnectedUser() user: JwtPayload) {
   //   return this.taskService.findOne(+id, user);
   // }
-  @UseGuards(CompanyAccessGuard(Task))
+  @UseGuards(CompanyAccessGuard(User))
   @Get('user/:id')
   getTasksByUser(@Param('id') userId: string, @Body() paginationDto?: PaginationDto) {
     return this.taskService.getTasksByUser(+userId, paginationDto);

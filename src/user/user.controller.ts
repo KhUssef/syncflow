@@ -1,4 +1,4 @@
-import { Controller, UseGuards, Sse, Get, Param, Body, Patch, Delete, Post } from '@nestjs/common';
+import { Controller, UseGuards, Sse, Get, Param, Body, Patch, Delete, Post,  } from '@nestjs/common';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ConnectedUser } from '../auth/decorator/user.decorator';
@@ -72,6 +72,16 @@ export class UserController {
   }
 
   @UseGuards(CompanyAccessGuard(User))
+  @Post('recover/:id')
+  async recover(@Param('id') id: string, @ConnectedUser() user: JwtPayload): Promise<User> {
+    console.log('Recovering user with ID:', id);
+    const recoveredUser = await this.userService.recover(+id, user);
+    this.eventEmitter.emit('user.recovered', recoveredUser);
+    console.log('Recovered user:', recoveredUser);
+    return recoveredUser;
+  }
+
+  @UseGuards(CompanyAccessGuard(User))
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<User> {
     return this.userService.findOne(+id);
@@ -100,11 +110,5 @@ export class UserController {
     return { success: true };
   }
 
-  @UseGuards(CompanyAccessGuard(User))
-  @Post(':id/recover')
-  async recover(@Param('id') id: string, @ConnectedUser() user: JwtPayload): Promise<User> {
-    const recoveredUser = await this.userService.recover(+id, user);
-    this.eventEmitter.emit('user.recovered', recoveredUser);
-    return recoveredUser;
-  }
+  
 }
