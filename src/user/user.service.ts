@@ -60,9 +60,9 @@ export class UserService {
     });
   }
 
-  async findDeleted(): Promise<User[]> {
+  async findDeleted(userCompanyCode: string): Promise<User[]> {
     return this.userRepository.find({
-      where: { deletedAt: Not(IsNull()) },
+      where: { deletedAt: Not(IsNull()), company: { code: userCompanyCode } },
       select: UserSelectOptions,
       relations: ['company'],
       withDeleted: true,

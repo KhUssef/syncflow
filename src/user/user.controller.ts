@@ -25,8 +25,8 @@ export class UserController {
   ) {}
 
   @Get('deleted')
-  async findDeleted(): Promise<User[]> {
-    return this.userService.findDeleted();
+  async findDeleted(@ConnectedUser() user: JwtPayload): Promise<User[]> {
+    return this.userService.findDeleted(user.companyCode);
   }
 
   @Get('company')
