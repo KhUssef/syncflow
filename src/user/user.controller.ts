@@ -16,7 +16,7 @@ import { RolesGuard } from 'src/auth/role-guard';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles([Role.MANAGER])
+
 export class UserController {
   constructor(
     private readonly userService: UserService,
@@ -24,17 +24,20 @@ export class UserController {
     private readonly eventEmitter: EventEmitter2
   ) {}
 
+  @Roles([Role.MANAGER])
   @Get('deleted')
   async findDeleted(@ConnectedUser() user: JwtPayload): Promise<User[]> {
     return this.userService.findDeleted(user.companyCode);
   }
 
+  @Roles([Role.MANAGER])
   @Get('company')
   async getUsersByCompany(@ConnectedUser() user: JwtPayload): Promise<User[]> {
     return this.userService.getUsersByCompany(user.companyCode);
   }
 
 
+  @Roles([Role.MANAGER])
   @Get('by-username/:username')
   async findByUsername(
     @Param('username') username: string,
@@ -57,6 +60,7 @@ export class UserController {
     return stream;
   }
 
+  @Roles([Role.MANAGER])
   @Get('usernames')
   async getUserNames(@ConnectedUser() user: JwtPayload): Promise<{username: string, id: number}[]> {
     console.log("Controller: Fetching usernames for company code:", user.companyCode);
@@ -65,12 +69,14 @@ export class UserController {
     return res;
   }
 
+  @Roles([Role.USER])
    @Get('current')
   async currentUser(@ConnectedUser() user : JwtPayload): Promise<User> {
     console.log(this.userService.findOne(user.sub));
     return this.userService.findOne(user.sub);
   }
 
+  @Roles([Role.MANAGER])
   @UseGuards(CompanyAccessGuard(User))
   @Post('recover/:id')
   async recover(@Param('id') id: string, @ConnectedUser() user: JwtPayload): Promise<User> {
@@ -81,6 +87,7 @@ export class UserController {
     return recoveredUser;
   }
 
+  @Roles([Role.MANAGER])
   @UseGuards(CompanyAccessGuard(User))
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<User> {
@@ -88,7 +95,7 @@ export class UserController {
   }
 
  
-  
+  @Roles([Role.MANAGER])
   @UseGuards(CompanyAccessGuard(User))
   @Patch(':id')
   async update(
@@ -101,6 +108,7 @@ export class UserController {
     return updatedUser;
   }
 
+  @Roles([Role.MANAGER])
   @UseGuards(CompanyAccessGuard(User))
   @Delete(':id')
   async remove(@Param('id') id: string, @ConnectedUser() user: JwtPayload) {
