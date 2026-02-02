@@ -1,5 +1,5 @@
 import { Controller, Delete, Param, UseGuards } from '@nestjs/common';
-import { Post, Body } from '@nestjs/common';
+import { Post, Body, Get } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Roles } from './decorator/roles.decorator';
 import { ConnectedUser } from './decorator/user.decorator';
@@ -50,4 +50,10 @@ export class AuthController {
     return this.authService.deleteUser(id, manager);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get("company-code")
+  getCompanyCode(@ConnectedUser() user: JwtPayload) {
+    console.log("Company code requested for user:", user.sub);
+    return {"companyCode": user.companyCode}  ;
+  }
 }
