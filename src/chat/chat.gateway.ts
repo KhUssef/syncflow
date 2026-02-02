@@ -63,8 +63,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     server.use((socket, next) => {
           // Verify JWT for ALL connections
           try {
-            console.log("Chat Socket verifying token");
-            console.log("Handshake auth:", socket.handshake.auth);
             let token = socket.handshake.auth.token;
             if(!token) {
               throw new Error('No token provided');
@@ -73,7 +71,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
               token = token.slice(7, token.length).trim();
             }
             const user = jwt.verify(token, this.secret) as unknown as JwtPayload;
-            console.log("Note Socket verified user:", user);
             socket.data.user = user;
             next();
           } catch (err) {
@@ -86,7 +83,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     try {
       const user = client.data.user as JwtPayload;
       
-      console.log(`Chat connected: ${user.username} (${user.sub})`);
 
       const roomId = parseInt(client.handshake.query.roomId as string);
       if(!roomId) {

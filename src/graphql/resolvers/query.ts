@@ -8,9 +8,7 @@
             return context.userService.getAllUsers();
         },
         async NoteLines(_parent: any, _args: {noteId: number, start:number, limit: number}, context) {
-            console.log('Fetching note lines for note ID:', _args.noteId);
             const note = await context.noteService.getNoteById(_args.noteId);
-            console.log('Note:', note);
             if (!note) {
                 throw new Error(`Note with ID ${_args.noteId} not found`);
             }

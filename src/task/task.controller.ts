@@ -73,6 +73,7 @@ export class TaskController {
 
   @Post()
   create(@Body() createTaskDto: CreateTaskDto, @ConnectedUser() user: JwtPayload) {
+    console.log("Creating task for user:", createTaskDto);
     return this.taskService.create(createTaskDto, user);
   }
 

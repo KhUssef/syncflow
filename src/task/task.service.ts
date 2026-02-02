@@ -81,6 +81,7 @@ export class TaskService {
     if (isTomorrow(savedTask.dueDate)) {
       this.eventEmitter.emit('task.dueTomorrow', savedTask);
     }
+    console.log("Created task:", savedTask);
 
     return savedTask;
   }

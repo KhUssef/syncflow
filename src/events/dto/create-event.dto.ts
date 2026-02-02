@@ -11,6 +11,5 @@ export class CreateEventDto implements Partial<Event> {
   @IsNotEmpty()
   date: Date;
 
-  @IsNotEmpty()
-  createdById : number;
+  createdById? : number;
 }

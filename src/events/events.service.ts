@@ -66,115 +66,74 @@ export class EventsService{
   }
 
   async getAll(companyCode : string, limit: number = 0, offset: number=0) : Promise<any[]> {
-    const companyId = await this.companyRepo.findOne({
+    const company = await this.companyRepo.findOne({
       where: { code: companyCode },
       select: ['id'],
     });
-    if (!companyId) {
+    if (!company) {
       throw new NotFoundException(`Company with code ${companyCode} not found`);
     }
-    console.log('Company ID:', companyId);
-    const query = this.repo.createQueryBuilder('event')
-      .where('event.companyId = :companyId', { companyId : companyId.id })
-      .select([
-        'event.id AS event_id',
-        'event.title AS event_title',
-        'event.date AS event_date',
-        'event.description AS event_description',
-        'event.createdById AS event_created_by_id',
-      ])
-      .orderBy('event.date', 'DESC');
 
-    if (limit > 0) {
-      query.take(limit);
-    }
-    if (offset > 0) {
-      query.skip(offset);
-    }
-    console.log('Query:', query.getSql());
-    const raw = await query.getRawMany();
-    console.log('Raw Events:', raw);
-    return raw.map(event => ({
-      id: event.event_id,
-      title: event.event_title,
-      date: event.event_date,
-      description: event.event_description,
-      createdById: event.event_created_by_id,
-  }) );}
+    const events = await this.repo.find({
+      where: { company: { id: company.id } },
+      relations: ['createdBy'],
+      select : {id: true, title: true, date: true, description: true, createdBy: { id: true, username: true } },
+      order: { date: 'DESC' },
+      take: limit > 0 ? limit : undefined,
+      skip: offset > 0 ? offset : undefined,
+    });
+
+    return events;
+  }
 
 
 
   async EventByMonth(companyCode: string, date: Date): Promise<any[]> {
-    const companyId = await this.companyRepo.findOne({
+    const company = await this.companyRepo.findOne({
       where: { code: companyCode },
       select: ['id'],
     });
-    if (!companyId) {
+    if (!company) {
       throw new NotFoundException(`Company with code ${companyCode} not found`);
     }
-    console.log(typeof date, date);
+
     const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
     const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-    if (!companyId) {
-      throw new NotFoundException(`Company with code ${companyCode} not found`);
-    }
-    const query =  this.repo.createQueryBuilder('event')
-      .where('event.companyId = :companyId', { companyId: companyId.id})
-      .andWhere('event.date BETWEEN :startOfMonth AND :endOfMonth', {
-        startOfMonth,
-        endOfMonth,
-      }).select([
-        'event.id AS event_id',
-        'event.title AS event_title',
-        'event.date AS event_date',
-        'event.description AS event_description',
-        'event.createdById AS event_created_by_id',
-      ])
 
-    const raw = await query.getRawMany();
-    return raw.map(event => ({
-      id: event.event_id,
-      title: event.event_title,
-      date: event.event_date,
-      description: event.event_description,
-      createdById: event.event_created_by_id,
-    }));
+    const events = await this.repo.find({
+      where: {
+        company: { id: company.id },
+        date: Between(startOfMonth, endOfMonth),
+      },
+      relations: ['createdBy'],
+      select : {id: true, title: true, date: true, description: true, createdBy: { id: true, username: true } }
+    });
+    console.log("Events in month:", events);
+    return events;
   }
-  async EventByDay(companyCode: string,date : Date): Promise<any[]> {
+  async EventByDay(companyCode: string, date: Date): Promise<any[]> {
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
-    const companyId = await this.companyRepo.findOne({
+
+    const company = await this.companyRepo.findOne({
       where: { code: companyCode },
       select: ['id'],
     });
-    if(!companyId)
-    {
-      throw new NotFoundException(`Company with ID ${companyId} not found`);
+    if (!company) {
+      throw new NotFoundException(`Company with code ${companyCode} not found`);
     }
-    const query = this.repo.createQueryBuilder('event')
-      .where('event.companyId = :companyId', { companyId : companyId.id })
-      .andWhere('event.date BETWEEN :startOfDay AND :endOfDay', {
-        startOfDay,
-        endOfDay,
-      }).select([
-        'event.id AS event_id',
-        'event.title AS event_title',
-        'event.date AS event_date',
-        'event.description AS event_description',
-        'event.createdById AS event_created_by_id',
-      ])
-        ;
-    const raw = await query.getRawMany();
-    return raw.map(event => ({
-      id: event.event_id,
-      title: event.event_title,
-      date: event.event_date,
-      description: event.event_description,
-      createdById: event.event_created_by_id,
-    }));
 
+    const events = await this.repo.find({
+      where: {
+        company: { id: company.id },
+        date: Between(startOfDay, endOfDay),
+      },
+      relations: ['createdBy'],
+    });
+
+    return events;
   }
 
   // async getEventNamesByDate(date: Date): Promise<{ name: string; date: Date }[]> {

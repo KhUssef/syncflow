@@ -71,7 +71,6 @@ export class CreateEventService {
 
   const newEvent = this.eventRepository.create(op);
   await this.eventRepository.save(newEvent);
-  console.log('Event created:', newEvent);
   this.eventEmitter.emit(`event.created.${user.company?.code}`, newEvent);
 }
 

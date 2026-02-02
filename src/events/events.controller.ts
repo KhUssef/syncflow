@@ -27,6 +27,7 @@ export class EventsController {
   @Get('by-month/:date')
   EventByMonth(@Param('date') date: string, @ConnectedUser() user: JwtPayload) {
     const dateObj = new Date(date);
+    console.log("ff", this.service.EventByMonth(user.companyCode, dateObj));
     return this.service.EventByMonth(user.companyCode, dateObj);
   }
 

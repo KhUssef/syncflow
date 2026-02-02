@@ -8,7 +8,6 @@ export class EventResolver {
 
 export const EventQuery = {
   async getAllEvents(_parent: any, _args: any, context) {
-    console.log(context.user);
     const code = context.user.companyCode;
   
     const events = await context.eventsService.getAll(code);
