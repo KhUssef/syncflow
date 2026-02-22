@@ -4,6 +4,7 @@ import { Note } from '../../note/entities/note.entity';
 import { Task } from '../../task/entities/task.entity';
 import { Operation } from 'src/history/entities/operation.entity';
 import { Event } from '../../events/entities/event.entity';
+import { Relation } from 'typeorm';
 @Entity()
 export class Company {
   @PrimaryGeneratedColumn()
@@ -16,19 +17,19 @@ export class Company {
   name: string;
 
   @OneToMany(() => User, user => user.company)
-  users: User[];
+  users: Relation<User[]>;
 
   @OneToMany(() => Note, note => note.company)
-  notes: Note[];
+  notes: Relation<Note[]>;
 
   @OneToMany(() => Task, task => task.company)
-  tasks: Task[];
+  tasks: Relation<Task[]>;
 
   @OneToMany(() => Event, Event => Event.company)
-  events: Event[];
+  events: Relation<Event[]>;
 
   @OneToMany(() => Operation, operation => operation.company)
-  operations: Operation[]; // Assuming Operation has a company relation
+  operations: Relation<Operation[]>; // Assuming Operation has a company relation
 
 
   @DeleteDateColumn()

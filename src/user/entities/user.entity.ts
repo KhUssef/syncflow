@@ -4,6 +4,7 @@ import { NoteLine } from 'src/note/entities/noteline.entity';
 import { Task } from 'src/task/entities/task.entity';
 import  {Role} from '../../enum/role.enum';
 import { Event } from 'src/events/entities/event.entity';
+import { Relation } from 'typeorm';
 
 @Entity()
 export class User {
@@ -20,13 +21,13 @@ export class User {
   password: string;
 
   @ManyToOne(() => Company, company => company.users)
-  company: Company;
+  company: Relation<Company>;
 
   @OneToMany(() => NoteLine, line => line.lastEditedBy)
-  editedLines: NoteLine[];
+  editedLines: Relation<NoteLine[]>;
 
   @OneToMany(() => Task, task => task.assignedTo)
-  tasks: Task[];
+  tasks: Relation<Task[]>;
 
   @Column({type:'enum', enum: Role, default: Role.USER})
   role: Role;
@@ -35,6 +36,6 @@ export class User {
   deletedAt?: Date;
 
   @OneToMany(() => Event, event => event.createdBy)
-  events: Event[];
+  events: Relation<Event[]>;
  
 }

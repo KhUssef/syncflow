@@ -2,6 +2,7 @@ import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, DeleteDateColumn } f
 import { Company } from '../../company/entities/company.entity';
 import { User } from '../../user/entities/user.entity';
 import { text } from 'express';
+import { Relation } from 'typeorm';
 @Entity()
 export class Task {
   @PrimaryGeneratedColumn()
@@ -17,10 +18,10 @@ export class Task {
   dueDate: Date;
 
   @ManyToOne(() => Company, company => company.tasks)
-  company: Company;
+  company: Relation<Company>;
 
   @ManyToOne(() => User, user => user.tasks, { nullable: true })
-  assignedTo: User;
+  assignedTo: Relation<User>;
 
   @Column({ default: false })
   completed: boolean;

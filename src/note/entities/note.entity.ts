@@ -3,6 +3,8 @@ import { User } from '../../user/entities/user.entity';
 import { Company } from 'src/company/entities/company.entity';
 import { Task } from '../../task/entities/task.entity';
 import { NoteLine } from './noteline.entity';
+import { Relation } from 'typeorm';
+
 @Entity()
 export class Note {
   @PrimaryGeneratedColumn()
@@ -12,10 +14,10 @@ export class Note {
   title: string;
 
   @ManyToOne(() => Company, company => company.notes)
-  company: Company;
+  company: Relation<Company>;
 
   @OneToMany(() => NoteLine, line => line.note, { cascade: true })
-  lines: NoteLine[];
+  lines: Relation<NoteLine[]>;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updatedAt: Date;

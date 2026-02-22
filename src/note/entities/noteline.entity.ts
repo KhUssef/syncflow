@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, DeleteDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, DeleteDateColumn, Relation } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
 import { Note } from '../../note/entities/note.entity';
 import { Task } from '../../task/entities/task.entity';
@@ -14,10 +14,10 @@ export class NoteLine {
   content: string;
 
   @ManyToOne(() => Note, note => note.lines)
-  note: Note;
+  note: Relation<Note>;
 
   @ManyToOne(() => User, user => user.editedLines)
-  lastEditedBy: User;
+  lastEditedBy: Relation<User>;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updatedAt: Date;

@@ -1,6 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn, DeleteDateColumn } from 'typeorm';
 import { User } from 'src/user/entities/user.entity';
 import { Chat } from './chat.entity';
+import { Relation } from 'typeorm';
 
 @Entity()
 export class Message {
@@ -11,10 +12,10 @@ export class Message {
   content: string;
 
   @ManyToOne(() => User, user => user.id)
-  sender: User;
+  sender: Relation<User>;
 
   @ManyToOne(() => Chat, chat => chat.messages)
-  chat: Chat;
+  chat: Relation<Chat>;
 
   @CreateDateColumn()
   createdAt: Date;

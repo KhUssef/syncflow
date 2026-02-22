@@ -3,6 +3,7 @@ import { User } from '../../user/entities/user.entity';
 import { Target } from 'src/enum/target.enum';
 import { OperationType } from 'src/enum/operation-type';
 import { Company } from 'src/company/entities/company.entity';
+import { Relation } from 'typeorm';
 @Entity()
 export class Operation {
   @PrimaryGeneratedColumn()
@@ -25,11 +26,11 @@ export class Operation {
 
   @ManyToOne(() => User)
   @JoinColumn()
-  performedBy: User;
+  performedBy: Relation<User>;
 
   @ManyToOne(() => Company)
   @JoinColumn()
-  company: Company;
+  company: Relation<Company>;
 
   @DeleteDateColumn()
   deletedAt?: Date;

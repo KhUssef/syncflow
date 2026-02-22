@@ -37,7 +37,6 @@ export class UserController {
   }
 
 
-  @Roles([Role.MANAGER])
   @Get('by-username/:username')
   async findByUsername(
     @Param('username') username: string,
@@ -69,7 +68,7 @@ export class UserController {
     return res;
   }
 
-  @Roles([Role.USER])
+  @Roles([Role.USER, Role.MANAGER])
    @Get('current')
   async currentUser(@ConnectedUser() user : JwtPayload): Promise<User> {
     console.log(this.userService.findOne(user.sub));

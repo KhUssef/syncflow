@@ -1,6 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
 import { User } from 'src/user/entities/user.entity';
 import { Company } from 'src/company/entities/company.entity';
+import { Relation } from 'typeorm';
 
 @Entity()
 export class Event {
@@ -12,7 +13,7 @@ export class Event {
 
 
   @ManyToOne(() => Company, company => company.events)
-  company: Company; 
+  company: Relation<Company>;
 
   @Column()
   description: string;
@@ -22,5 +23,5 @@ export class Event {
   date: Date;
 
   @ManyToOne(() => User, createdBy => createdBy.events)
-  createdBy: User;
+  createdBy: Relation<User>;
 }
